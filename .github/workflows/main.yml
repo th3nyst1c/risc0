@@ -127,6 +127,9 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.feature }}
       - run: cargo test -F $FEATURE
         working-directory: examples
+      - run: cargo test -F $FEATURE
+        working-directory: bonsai/examples/governance
+        if: matrix.device == 'cpu'
 
   doc:
     runs-on: [self-hosted, prod, Linux, cpu]
