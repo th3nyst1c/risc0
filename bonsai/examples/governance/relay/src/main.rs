@@ -15,12 +15,9 @@
 use std::{io::Write, sync::Arc};
 
 use anyhow::Context;
-use bonsai_ethereum_relay::Relayer;
-use bonsai_ethereum_relay_cli::{resolve_guest_entry, resolve_image_output, Output, ProverMode};
-use bonsai_sdk::{
-    alpha::{responses::SnarkProof, SdkErr},
-    alpha_async::{get_client_from_parts, put_image},
-};
+use bonsai_ethereum_relay::{resolve_guest_entry, resolve_image_output, Output, ProverMode};
+use bonsai_sdk::alpha::responses::SnarkProof;
+use bonsai_starter_methods::GUEST_LIST;
 use clap::{Parser, Subcommand};
 use ethers::{
     abi::{Hash, Token, Tokenizable},

@@ -19,8 +19,7 @@ use bonsai_sdk::{
     alpha::{Client, SessionId},
     alpha_async::{download, session_status},
 };
-use ethers::abi;
-use risc0_zkvm::SessionReceipt;
+use risc0_zkvm::Receipt;
 
 use super::snark::tokenize_snark_proof;
 use crate::{api, uploader::completed_proofs::error::CompleteProofError};
@@ -71,7 +70,7 @@ pub(crate) async fn get_complete_proof(
         }
     })?]);
 
-    let receipt: SessionReceipt =
+    let receipt: Receipt =
         bincode::deserialize(&receipt_buf).map_err(|_| CompleteProofError::InvalidReceipt {
             id: bonsai_proof_id.clone(),
         })?;

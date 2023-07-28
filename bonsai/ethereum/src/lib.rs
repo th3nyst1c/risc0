@@ -47,7 +47,7 @@ mod tests {
         },
         utils::{hex, Anvil, AnvilInstance},
     };
-    use risc0_zkvm::{receipt::InnerReceipt, SessionReceipt};
+    use risc0_zkvm::{receipt::InnerReceipt, Receipt};
 
     use crate::{
         i_bonsai_relay, i_bonsai_relay::CallbackAuthorization, BonsaiRelayCallback, BonsaiTestRelay,
@@ -194,7 +194,7 @@ mod tests {
             callback_image_id: Secret::zero().0,
         };
 
-        let fake_receipt = SessionReceipt {
+        let fake_receipt = Receipt {
             inner: InnerReceipt::Fake,
             journal: call_me_call.encode()[4..4 + 32 + 32].to_vec(),
         };
