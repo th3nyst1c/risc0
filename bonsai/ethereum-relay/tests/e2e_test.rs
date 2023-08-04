@@ -15,7 +15,8 @@
 #[cfg(test)]
 mod tests {
 
-    use std::{path::Path, sync::Arc, time::SystemTime};
+    use ethers::prelude::*;
+    abigen!(Counter, "../ethereum/out/Counter.sol/Counter.json");
 
     use std::{sync::Arc, time::SystemTime};
 
@@ -35,8 +36,6 @@ mod tests {
     use risc0_zkvm::{MemoryImage, Program, MEM_SIZE, PAGE_SIZE};
     use risc0_zkvm_methods::{SLICE_IO_ELF, SLICE_IO_ID};
     use tokio::time::{sleep, Duration};
-
-    use crate::tests::counter::Counter;
 
     const BONSAI_API_URI: &str = "http://localhost:8081";
 
