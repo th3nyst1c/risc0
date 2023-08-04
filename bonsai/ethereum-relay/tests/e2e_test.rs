@@ -15,8 +15,7 @@
 #[cfg(test)]
 mod tests {
 
-    use ethers::prelude::*;
-    abigen!(Counter, "tests/out/Counter.sol/Counter.json");
+    use std::{path::Path, sync::Arc, time::SystemTime};
 
     use std::time::SystemTime;
 
@@ -84,45 +83,35 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn e2e_test_counter() {
-        // deploy the contracts
+        // Get Anvil
         let anvil = utils::get_anvil();
-        let ethers_client = utils::get_ethers_client(
-            utils::get_ws_provider(anvil.as_ref()).await.unwrap(),
-            utils::get_wallet(anvil.as_ref()).unwrap(),
-        )
-        .await
-        .unwrap();
-        let bonsai_relay_contract = match dev_mode() {
-            true => {
-                BonsaiTestRelay::deploy(ethers_client.clone(), ethers_client.signer().chain_id())
-                    .expect("should be able to deploy the BonsaiTestRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address()
-            }
-            false => {
-                let verifier = RiscZeroGroth16Verifier::deploy(ethers_client.clone(), ())
-                    .expect("should be able to deploy the BonsaiRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address();
 
-                BonsaiRelay::deploy(ethers_client.clone(), verifier)
-                    .expect("should be able to deploy the BonsaiRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address()
-            }
-        };
+        // Get client config
+        let ethers_client_config = utils::get_ethers_client_config(anvil.as_ref())
+            .await
+            .expect("Failed to get ethers client config");
+        let ethers_client = Arc::new(
+            ethers_client_config
+                .get_client()
+                .await
+                .expect("Failed to get ethers client"),
+        );
 
-        let counter = Counter::deploy(ethers_client.clone(), ())
-            .expect("should be able to deploy the Counter contract")
+        let proxy = ProxyContract::deploy(ethers_client.clone(), ())
+            .expect("should be able to deploy the proxy contract")
             .send()
             .await
             .expect("deployment should succeed");
+        let compiled_contract =
+            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
+        let counter = utils::deploy_contract(
+            (),
+            "Counter".to_string(),
+            compiled_contract,
+            ethers_client_config.clone(),
+        )
+        .await
+        .unwrap();
         assert_eq!(
             counter
                 .method::<_, U256>("value", ())
@@ -143,7 +132,7 @@ mod tests {
         };
 
         dbg!("starting bonsai relayer");
-        tokio::spawn(relayer.run(ethers_client.clone()));
+        tokio::spawn(relayer.run(ethers_client_config.clone()));
 
         // wait for relay to start
         sleep(Duration::from_secs(2)).await;
@@ -229,44 +218,35 @@ mod tests {
     #[tokio::test]
     #[ignore]
     async fn e2e_test_counter_publish_mode() {
-        // deploy the contracts
+        // Get Anvil
         let anvil = utils::get_anvil();
-        let ethers_client = utils::get_ethers_client(
-            utils::get_ws_provider(anvil.as_ref()).await.unwrap(),
-            utils::get_wallet(anvil.as_ref()).unwrap(),
-        )
-        .await
-        .unwrap();
-        let bonsai_relay_contract = match dev_mode() {
-            true => {
-                BonsaiTestRelay::deploy(ethers_client.clone(), ethers_client.signer().chain_id())
-                    .expect("should be able to deploy the BonsaiTestRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address()
-            }
-            false => {
-                let verifier = RiscZeroGroth16Verifier::deploy(ethers_client.clone(), ())
-                    .expect("should be able to deploy the BonsaiRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address();
 
-                BonsaiRelay::deploy(ethers_client.clone(), verifier)
-                    .expect("should be able to deploy the BonsaiRelay contract")
-                    .send()
-                    .await
-                    .expect("deployment should succeed")
-                    .address()
-            }
-        };
-        let counter = Counter::deploy(ethers_client.clone(), ())
-            .expect("should be able to deploy the Counter contract")
+        // Get client config
+        let ethers_client_config = utils::get_ethers_client_config(anvil.as_ref())
+            .await
+            .expect("Failed to get ethers client config");
+        let ethers_client = Arc::new(
+            ethers_client_config
+                .get_client()
+                .await
+                .expect("Failed to get ethers client"),
+        );
+
+        let proxy = ProxyContract::deploy(ethers_client.clone(), ())
+            .expect("should be able to deploy the proxy contract")
             .send()
             .await
             .expect("deployment should succeed");
+        let compiled_contract =
+            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
+        let counter = utils::deploy_contract(
+            (),
+            "Counter".to_string(),
+            compiled_contract,
+            ethers_client_config.clone(),
+        )
+        .await
+        .unwrap();
         assert_eq!(
             counter
                 .method::<_, U256>("value", ())
@@ -287,7 +267,7 @@ mod tests {
         };
 
         dbg!("starting bonsai relayer");
-        tokio::spawn(relayer.run(ethers_client.clone()));
+        tokio::spawn(relayer.run(ethers_client_config.clone()));
 
         // wait for relay to start
         sleep(Duration::from_secs(2)).await;

@@ -86,27 +86,28 @@ pub(crate) mod tests {
 
     #[tokio::test]
     async fn integration_test_completed_proof_manager() {
-        abigen!(Proxy, "tests/out/ProxyTest.sol/Proxy.json");
-        use bonsai_ethereum_contracts::i_bonsai_relay;
-        use ethers::prelude::*;
-
+        // Get Anvil
         let anvil = utils::get_anvil();
-        let ethers_client = utils::get_ethers_client(
-            utils::get_ws_provider(anvil.as_ref()).await.unwrap(),
-            utils::get_wallet(anvil.as_ref()).unwrap(),
-        )
-        .await
-        .unwrap();
+
+        // Get client config
+        let ethers_client_config = utils::get_ethers_client_config(anvil.as_ref())
+            .await
+            .expect("Failed to get ethers client config");
 
         // Mock API server
         let (proof_id, server) = get_test_bonsai_server().await;
 
-        // deploy the contract
-        let proxy = Proxy::deploy(ethers_client.clone(), ())
-            .expect("should be able to deploy the Counter contract")
-            .send()
-            .await
-            .expect("deployment should succeed");
+        // deploy the contracts
+        let compiled_contract =
+            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
+        let proxy = utils::deploy_contract(
+            (),
+            "Proxy".to_string(),
+            compiled_contract,
+            ethers_client_config.clone(),
+        )
+        .await
+        .unwrap();
 
         let bonsai_client = get_client_from_parts(server.uri(), String::default())
             .await
@@ -132,7 +133,7 @@ pub(crate) mod tests {
             send_batch_notifier.clone(),
             max_batch_size,
             proxy.address(),
-            ethers_client.clone(),
+            ethers_client_config.clone(),
             send_batch_interval,
         );
 
@@ -188,7 +189,10 @@ pub(crate) mod tests {
 
         // check that the event was emitted
         let filter = &Filter::new().address(proxy.address());
-        let logs = ethers_client
+        let logs = ethers_client_config
+            .get_client()
+            .await
+            .expect("Failed to get client")
             .get_logs(&filter)
             .await
             .expect("logs should be present");
