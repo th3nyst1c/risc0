@@ -49,8 +49,9 @@ mod tests {
         match std::env::var("RISC0_DEV_MODE") {
             Ok(ref val) if val == "false" => Ok(false),
             Ok(ref val) if val == "true" => Ok(true),
-            Err(std::env::VarError::NotPresent) | Ok(ref val) if val.is_empty() => Ok(true),
-            Ok(ref val) => anyhow!("invalid boolean value for RISC0_DEV_MODE: {}", val),
+            Ok(ref val) if val.is_empty() => Ok(true),
+            Ok(ref val) => Err(anyhow!("invalid boolean value for RISC0_DEV_MODE: {}", val)),
+            Err(std::env::VarError::NotPresent) => Ok(true),
             Err(e) => Err(e.into()),
         }
     }
@@ -99,7 +100,7 @@ mod tests {
                 .await
                 .expect("Failed to get ethers client"),
         );
-        let bonsai_relay_contract = match dev_mode()? {
+        let bonsai_relay_contract = match dev_mode().unwrap() {
             true => {
                 BonsaiTestRelay::deploy(ethers_client.clone(), ethers_client.signer().chain_id())
                     .expect("should be able to deploy the BonsaiTestRelay contract")
@@ -144,6 +145,7 @@ mod tests {
         // run the bonsai relayer
         let relayer = Relayer {
             rest_api: false,
+            dev_mode: dev_mode().unwrap(),
             rest_api_port: "8080".to_string(),
             bonsai_api_url: get_bonsai_url(),
             bonsai_api_key: get_api_key(),
@@ -250,6 +252,22 @@ mod tests {
                 .await
                 .expect("Failed to get ethers client"),
         );
+        let bonsai_relay_contract = match dev_mode().unwrap() {
+            true => {
+                BonsaiTestRelay::deploy(ethers_client.clone(), ethers_client.signer().chain_id())
+                    .expect("should be able to deploy the BonsaiTestRelay contract")
+                    .send()
+                    .await
+                    .expect("deployment should succeed")
+                    .address()
+            }
+            false => {
+                let verifier = RiscZeroGroth16Verifier::deploy(ethers_client.clone(), ())
+                    .expect("should be able to deploy the BonsaiRelay contract")
+                    .send()
+                    .await
+                    .expect("deployment should succeed")
+                    .address();
 
         let proxy = ProxyContract::deploy(ethers_client.clone(), ())
             .expect("should be able to deploy the proxy contract")
@@ -279,6 +297,7 @@ mod tests {
         // run the bonsai relayer
         let relayer = Relayer {
             rest_api: true,
+            dev_mode: dev_mode().unwrap(),
             rest_api_port: "8080".to_string(),
             bonsai_api_url: get_bonsai_url(),
             bonsai_api_key: get_api_key(),
