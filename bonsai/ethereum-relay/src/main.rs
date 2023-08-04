@@ -17,8 +17,8 @@ use bonsai_ethereum_relay::{EthersClientConfig, Relayer};
 use clap::Parser;
 use ethers::core::types::Address;
 
-const BONSAI_API_URI: &str = "http://localhost:8081";
-const DEFAULT_SERVER_PORT: &str = "8080";
+const BONSAI_API_URL: &str = "http://localhost:8081";
+const DEFAULT_REST_API_PORT: &str = "8080";
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -77,12 +77,12 @@ async fn main() -> Result<()> {
 fn get_bonsai_url() -> String {
     let endpoint = match std::env::var("BONSAI_API_URL") {
         Ok(endpoint) => endpoint,
-        Err(_) => BONSAI_API_URI.to_string(),
+        Err(_) => BONSAI_API_URL.to_string(),
     };
 
     endpoint
         .is_empty()
-        .then(|| BONSAI_API_URI.to_string())
+        .then(|| BONSAI_API_URL.to_string())
         .unwrap_or(endpoint)
 }
 
