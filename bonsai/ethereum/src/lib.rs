@@ -38,7 +38,7 @@ abigen!(
 #[cfg(test)]
 mod tests {
 
-    use std::{sync::Arc, time::Duration};
+    use std::{ops::Deref, sync::Arc, time::Duration};
 
     use ethers::{
         abi::{ethereum_types::Secret, AbiEncode},
@@ -51,7 +51,9 @@ mod tests {
     use risc0_zkvm::{receipt::InnerReceipt, Receipt};
 
     use crate::{
-        i_bonsai_relay, i_bonsai_relay::CallbackAuthorization, BonsaiRelayCallback, BonsaiTestRelay,
+        i_bonsai_relay,
+        i_bonsai_relay::{Callback, CallbackAuthorization},
+        BonsaiTestRelay, IBonsaiRelay,
     };
 
     abigen!(CallbackDummy, "out/CallbackDummy.sol/CallbackDummy.json");
@@ -119,13 +121,18 @@ mod tests {
         let (_anvil, client) = get_client().await;
         let wallet_address = client.address();
 
-        // Deploy Bonsai Test Relay contract
-        let test_relay_contract =
+        // Deploy Bonsai Test Relay contract to instanciate an IBonsaiRelay struct.
+        let test_relay_contract: IBonsaiRelay<_> =
             BonsaiTestRelay::deploy(client.clone(), client.get_chainid().await.unwrap())
                 .expect("Failed to create BonsaiTestRelay deployment tx")
                 .send()
                 .await
-                .expect("Failed to send BonsaiTestRelay deployment tx");
+                .expect("Failed to send BonsaiTestRelay deployment tx")
+                .deref()
+                .clone()
+                .into();
+
+        // Assert that the initial balance of the BonsaiTestRelay contract is zero.
         assert_eq!(
             client
                 .get_balance(test_relay_contract.address(), None)
@@ -201,31 +208,42 @@ mod tests {
         };
 
         let ethereum_callbacks = vec![
-            BonsaiRelayCallback {
+            Callback {
                 auth: CallbackAuthorization {
                     seal: vec![].into(),
                     post_state_digest: [0u8; 32],
                 },
-                payload: fake_receipt.journal.clone(),
+                payload: [
+                    callback_requests[0].function_selector.as_slice(),
+                    fake_receipt.journal.as_slice(),
+                    callback_requests[0].image_id.as_slice(),
+                ]
+                .concat()
+                .into(),
                 gas_limit: 50000,
-                callback_contract: callback_requests[0].clone(),
+                callback_contract: callback_requests[0].callback_contract.clone(),
             },
-            BonsaiRelayCallback {
+            Callback {
                 auth: CallbackAuthorization {
                     seal: vec![].into(),
                     post_state_digest: [0u8; 32],
                 },
-                payload: fake_receipt.journal,
+                payload: [
+                    callback_requests[1].function_selector.as_slice(),
+                    fake_receipt.journal.as_slice(),
+                    callback_requests[1].image_id.as_slice(),
+                ]
+                .concat()
+                .into(),
                 gas_limit: 50000,
-                callback_contract: callback_requests[1].clone(),
+                callback_contract: callback_requests[1].callback_contract.clone(),
             },
         ];
         dbg!(&ethereum_callbacks);
 
         // Submit responses
-        let callbacks = ethereum_callbacks.into_iter().map(|p| p.into()).collect();
         let invocation_transaction = test_relay_contract
-            .invoke_callbacks(callbacks)
+            .invoke_callbacks(ethereum_callbacks)
             .send()
             .await
             .expect("Failed to submit proof bundle")

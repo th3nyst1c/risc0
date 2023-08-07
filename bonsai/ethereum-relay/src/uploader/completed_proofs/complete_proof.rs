@@ -19,6 +19,7 @@ use bonsai_sdk::{
     alpha::{Client, SessionId},
     alpha_async::{download, session_status},
 };
+use ethers::abi;
 use risc0_zkvm::Receipt;
 
 use super::snark::tokenize_snark_proof;
@@ -34,7 +35,7 @@ pub(crate) async fn get_complete_proof(
     bonsai_client: Client,
     dev_mode: bool,
     bonsai_proof_id: SessionId,
-    callback_contract: CallbackRequestFilter,
+    callback_request: CallbackRequestFilter,
 ) -> Result<CompleteProof, CompleteProofError> {
     let bonsai_response = session_status(bonsai_client.clone(), bonsai_proof_id.clone())
         .await
@@ -91,12 +92,12 @@ pub(crate) async fn get_complete_proof(
     };
 
     let payload = [
-        callback_contract.function_selector.as_slice(),
+        callback_request.function_selector.as_slice(),
         receipt.journal.as_slice(),
-        callback_contract.image_id.as_slice(),
+        callback_request.image_id.as_slice(),
     ]
     .concat();
-    let gas_limit = callback_contract.gas_limit;
+    let gas_limit = callback_request.gas_limit;
 
     let auth = CallbackAuthorization {
         seal: seal.into(),

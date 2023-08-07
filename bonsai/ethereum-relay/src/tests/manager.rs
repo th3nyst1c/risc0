@@ -107,17 +107,12 @@ pub(crate) mod tests {
         // Mock API server
         let (proof_id, server) = get_test_bonsai_server().await;
 
-        // deploy the contracts
-        let compiled_contract =
-            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
-        let proxy = utils::deploy_contract(
-            (),
-            "Proxy".to_string(),
-            compiled_contract,
-            ethers_client_config.clone(),
-        )
-        .await
-        .unwrap();
+        // deploy the contract
+        let proxy = Proxy::deploy(ethers_client.clone(), ())
+            .expect("should be able to deploy the Counter contract")
+            .send()
+            .await
+            .expect("deployment should succeed");
 
         let bonsai_client = get_client_from_parts(server.uri(), String::default())
             .await

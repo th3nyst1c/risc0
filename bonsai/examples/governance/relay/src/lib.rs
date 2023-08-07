@@ -18,8 +18,7 @@ use anyhow::{anyhow, bail, Context, Result};
 use bonsai_sdk::alpha::{responses::SnarkProof, Client, SdkErr};
 use risc0_build::GuestListEntry;
 use risc0_zkvm::{
-    ExecutorEnv, Executor, MemoryImage, Program, ReceiptMetadata, Receipt,
-    MEM_SIZE, PAGE_SIZE,
+    Executor, ExecutorEnv, MemoryImage, Program, Receipt, ReceiptMetadata, MEM_SIZE, PAGE_SIZE,
 };
 
 /// Result of executing a guest image, possibly containing a proof.

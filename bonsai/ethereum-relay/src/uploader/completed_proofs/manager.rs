@@ -92,15 +92,11 @@ impl<S: Storage> BonsaiCompleteProofManager<S> {
                 .map(|complete_proof| complete_proof.ethereum_callback)
                 .collect();
 
-        let ethers_client = self.ethers_client_config.get_client().await.unwrap();
-        let proxy: ProxyContract<SignerMiddleware<Provider<Ws>, Wallet<SigningKey>>> =
-            ProxyContract::new(self.proxy_contract_address, Arc::new(ethers_client));
-        let proof_batch: Vec<Callback> = self
-            .ready_to_send_batch
-            .clone()
-            .into_iter()
-            .map(|complete_proof| complete_proof.ethereum_callback.into())
-            .collect();
+            info!("sending batch");
+            bonsay_relay
+                .invoke_callbacks(proof_batch)
+                .gas(BONSAI_RELAY_GAS_LIMIT)
+        };
 
         let pending_tx =
             contract_call

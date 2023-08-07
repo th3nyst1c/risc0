@@ -89,7 +89,6 @@ mod tests {
     async fn e2e_test_counter() {
         // Get Anvil
         let anvil = utils::get_anvil();
-
         // Get client config
         let ethers_client_config = utils::get_ethers_client_config(anvil.as_ref())
             .await
@@ -117,21 +116,20 @@ mod tests {
                     .expect("deployment should succeed")
                     .address();
 
-        let proxy = ProxyContract::deploy(ethers_client.clone(), ())
-            .expect("should be able to deploy the proxy contract")
+                BonsaiRelay::deploy(ethers_client.clone(), verifier)
+                    .expect("should be able to deploy the BonsaiRelay contract")
+                    .send()
+                    .await
+                    .expect("deployment should succeed")
+                    .address()
+            }
+        };
+
+        let counter = Counter::deploy(ethers_client.clone(), ())
+            .expect("should be able to deploy the Counter contract")
             .send()
             .await
             .expect("deployment should succeed");
-        let compiled_contract =
-            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
-        let counter = utils::deploy_contract(
-            (),
-            "Counter".to_string(),
-            compiled_contract,
-            ethers_client_config.clone(),
-        )
-        .await
-        .unwrap();
         assert_eq!(
             counter
                 .method::<_, U256>("value", ())
@@ -241,7 +239,6 @@ mod tests {
     async fn e2e_test_counter_publish_mode() {
         // Get Anvil
         let anvil = utils::get_anvil();
-
         // Get client config
         let ethers_client_config = utils::get_ethers_client_config(anvil.as_ref())
             .await
@@ -269,21 +266,19 @@ mod tests {
                     .expect("deployment should succeed")
                     .address();
 
-        let proxy = ProxyContract::deploy(ethers_client.clone(), ())
-            .expect("should be able to deploy the proxy contract")
+                BonsaiRelay::deploy(ethers_client.clone(), verifier)
+                    .expect("should be able to deploy the BonsaiRelay contract")
+                    .send()
+                    .await
+                    .expect("deployment should succeed")
+                    .address()
+            }
+        };
+        let counter = Counter::deploy(ethers_client.clone(), ())
+            .expect("should be able to deploy the Counter contract")
             .send()
             .await
             .expect("deployment should succeed");
-        let compiled_contract =
-            utils::compile_contracts(Path::new("tests/solidity/contracts")).unwrap();
-        let counter = utils::deploy_contract(
-            (),
-            "Counter".to_string(),
-            compiled_contract,
-            ethers_client_config.clone(),
-        )
-        .await
-        .unwrap();
         assert_eq!(
             counter
                 .method::<_, U256>("value", ())
