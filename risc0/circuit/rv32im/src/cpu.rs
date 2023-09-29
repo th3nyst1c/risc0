@@ -25,7 +25,7 @@ use risc0_zkp::{
 };
 
 use crate::{
-    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_ACCUM, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
+    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
 };
 
 pub struct CpuCircuitHal<'a, C: PolyFp<BabyBear>> {
@@ -69,7 +69,7 @@ where
         let code = unsafe { std::slice::from_raw_parts(code.as_ptr(), code.len()) };
         let data = groups[REGISTER_GROUP_DATA].as_slice();
         let data = unsafe { std::slice::from_raw_parts(data.as_ptr(), data.len()) };
-        let accum = groups[REGISTER_GROUP_ACCUM].as_slice();
+        let accum = groups[REGISTER_GROUP_AUX].as_slice();
         let accum = unsafe { std::slice::from_raw_parts(accum.as_ptr(), accum.len()) };
         let mix = globals[GLOBAL_MIX].as_slice();
         let mix = unsafe { std::slice::from_raw_parts(mix.as_ptr(), mix.len()) };

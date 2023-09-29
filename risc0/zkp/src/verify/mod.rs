@@ -26,7 +26,7 @@ pub use read_iop::ReadIOP;
 use risc0_core::field::{Elem, ExtElem, Field, RootsOfUnity};
 
 use crate::{
-    adapter::{CircuitCoreDef, REGISTER_GROUP_ACCUM, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA},
+    adapter::{CircuitCoreDef, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA},
     core::{digest::Digest, hash::HashSuite, log2_ceil},
     taps::TapSet,
     INV_RATE, MAX_CYCLES_PO2, QUERIES,
@@ -230,7 +230,7 @@ where
         // Get taps and compute sizes
         let code_size = taps.group_size(REGISTER_GROUP_CODE);
         let data_size = taps.group_size(REGISTER_GROUP_DATA);
-        let accum_size = taps.group_size(REGISTER_GROUP_ACCUM);
+        let accum_size = taps.group_size(REGISTER_GROUP_AUX);
 
         // Get merkle root for the code merkle tree.
         // The code merkle tree contains the control instructions for the zkVM.

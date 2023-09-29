@@ -23,7 +23,7 @@ use crate::{hal::cpu::SyncSlice, taps::TapSet};
 
 // TODO: Remove references to these constants so we don't depend on a
 // fixed set of register groups.
-pub const REGISTER_GROUP_ACCUM: usize = 0;
+pub const REGISTER_GROUP_AUX: usize = 0;
 pub const REGISTER_GROUP_CODE: usize = 1;
 pub const REGISTER_GROUP_DATA: usize = 2;
 

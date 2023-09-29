@@ -31,7 +31,7 @@ use risc0_zkp::{
 const METAL_LIB: &[u8] = include_bytes!(env!("RV32IM_METAL_PATH"));
 
 use crate::{
-    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_ACCUM, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
+    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
 };
 
 #[derive(Debug)]
@@ -78,7 +78,7 @@ impl<MH: MetalHash> CircuitHal<MetalHal<MH>> for MetalCircuitHal<MH> {
             check.as_arg(),
             groups[REGISTER_GROUP_CODE].as_arg(),
             groups[REGISTER_GROUP_DATA].as_arg(),
-            groups[REGISTER_GROUP_ACCUM].as_arg(),
+            groups[REGISTER_GROUP_AUX].as_arg(),
             globals[GLOBAL_MIX].as_arg(),
             globals[GLOBAL_OUT].as_arg(),
             poly_mix.as_arg(),

@@ -19,7 +19,7 @@ use rayon::prelude::*;
 use risc0_core::field::{Elem, Field};
 
 use crate::{
-    adapter::{CircuitProveDef, CircuitStepContext, CircuitStepHandler, REGISTER_GROUP_ACCUM},
+    adapter::{CircuitProveDef, CircuitStepContext, CircuitStepHandler, REGISTER_GROUP_AUX},
     hal::cpu::CpuBuffer,
     prove::{
         accum::{Accum, Handler},
@@ -128,7 +128,7 @@ where
             .exec
             .circuit
             .get_taps()
-            .group_size(REGISTER_GROUP_ACCUM);
+            .group_size(REGISTER_GROUP_AUX);
         self.accum = CpuBuffer::from_fn(self.steps * accum_size, |_| F::Elem::INVALID);
 
         self.compute_accum();

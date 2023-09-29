@@ -29,7 +29,7 @@ use risc0_zkp::{
 };
 
 use crate::{
-    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_ACCUM, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
+    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
 };
 
 const KERNELS_FATBIN: &[u8] = include_bytes!(env!("RV32IM_CUDA_PATH"));
@@ -60,7 +60,7 @@ impl<'a, CH: CudaHash> CircuitHal<CudaHal<CH>> for CudaCircuitHal<CH> {
     ) {
         let code = groups[REGISTER_GROUP_CODE];
         let data = groups[REGISTER_GROUP_DATA];
-        let accum = groups[REGISTER_GROUP_ACCUM];
+        let accum = groups[REGISTER_GROUP_AUX];
         let mix = globals[GLOBAL_MIX];
         let out = globals[GLOBAL_OUT];
         log::debug!(
