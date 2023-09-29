@@ -65,12 +65,12 @@ where
         // usage is within this function and each thread access will not overlap with
         // each other.
 
-        let code = groups[REGISTER_GROUP_CONTROL].as_slice();
-        let code = unsafe { std::slice::from_raw_parts(code.as_ptr(), code.len()) };
+        let control = groups[REGISTER_GROUP_CONTROL].as_slice();
+        let control = unsafe { std::slice::from_raw_parts(control.as_ptr(), control.len()) };
         let data = groups[REGISTER_GROUP_DATA].as_slice();
         let data = unsafe { std::slice::from_raw_parts(data.as_ptr(), data.len()) };
-        let accum = groups[REGISTER_GROUP_AUX].as_slice();
-        let accum = unsafe { std::slice::from_raw_parts(accum.as_ptr(), accum.len()) };
+        let aux = groups[REGISTER_GROUP_AUX].as_slice();
+        let aux = unsafe { std::slice::from_raw_parts(aux.as_ptr(), aux.len()) };
         let mix = globals[GLOBAL_MIX].as_slice();
         let mix = unsafe { std::slice::from_raw_parts(mix.as_ptr(), mix.len()) };
         let out = globals[GLOBAL_OUT].as_slice();
@@ -78,7 +78,7 @@ where
         let check = check.as_slice();
         let check = unsafe { std::slice::from_raw_parts(check.as_ptr(), check.len()) };
 
-        let args: &[&[BabyBearElem]] = &[code, out, data, mix, accum];
+        let args: &[&[BabyBearElem]] = &[control, out, data, mix, aux];
 
         (0..domain).into_par_iter().for_each(|cycle| {
             let tot = self.circuit.poly_fp(cycle, domain, &poly_mix, args);

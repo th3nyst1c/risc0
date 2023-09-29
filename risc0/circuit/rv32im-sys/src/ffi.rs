@@ -50,7 +50,7 @@ extern "C" {
 
     pub fn risc0_circuit_string_free(str: *const RawString);
 
-    pub fn risc0_circuit_rv32im_step_compute_accum(
+    pub fn risc0_circuit_rv32im_step_compute_aux(
         err: *mut RawError,
         ctx: *mut c_void,
         cb: Callback,
@@ -60,7 +60,7 @@ extern "C" {
         args_len: usize,
     ) -> BabyBearElem;
 
-    pub fn risc0_circuit_rv32im_step_verify_accum(
+    pub fn risc0_circuit_rv32im_step_verify_aux(
         err: *mut RawError,
         ctx: *mut c_void,
         cb: Callback,

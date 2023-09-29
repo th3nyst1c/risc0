@@ -228,15 +228,15 @@ where
         // log::debug!("size = {size}, po2 = {po2}");
 
         // Get taps and compute sizes
-        let code_size = taps.group_size(REGISTER_GROUP_CONTROL);
+        let control_size = taps.group_size(REGISTER_GROUP_CONTROL);
         let data_size = taps.group_size(REGISTER_GROUP_DATA);
-        let accum_size = taps.group_size(REGISTER_GROUP_AUX);
+        let aux_size = taps.group_size(REGISTER_GROUP_AUX);
 
         // Get merkle root for the code merkle tree.
         // The code merkle tree contains the control instructions for the zkVM.
         #[cfg(not(target_os = "zkvm"))]
         log::debug!("code_merkle");
-        let code_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, code_size, QUERIES);
+        let code_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, control_size, QUERIES);
         // log::debug!("codeRoot = {}", code_merkle.root());
         check_code(self.po2, code_merkle.root())?;
 
@@ -266,7 +266,7 @@ where
         // implement a look-up table.
         #[cfg(not(target_os = "zkvm"))]
         log::debug!("accum_merkle");
-        let accum_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, accum_size, QUERIES);
+        let accum_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, aux_size, QUERIES);
         // log::debug!("accumRoot = {}", accum_merkle.root());
 
         // Get a pseudorandom value with which to mix the constraint polynomials.

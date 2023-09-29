@@ -19,7 +19,7 @@ use risc0_core::field::{Elem, ExtElem, Field};
 
 use crate::adapter::CircuitStepHandler;
 
-/// Tracks grand product accumulations for PLONK-style permutation arguments.
+/// Tracks grand product accumulations for permutation & lookup arguments.
 pub struct Accum<E: Elem> {
     /// Total number of cycles in this run.
     cycles: usize,

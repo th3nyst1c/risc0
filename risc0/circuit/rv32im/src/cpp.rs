@@ -16,8 +16,8 @@ use std::{ffi::CStr, os::raw::c_void};
 
 use anyhow::{anyhow, Result};
 use risc0_circuit_rv32im_sys::ffi::{
-    get_trampoline, risc0_circuit_rv32im_poly_fp, risc0_circuit_rv32im_step_compute_accum,
-    risc0_circuit_rv32im_step_exec, risc0_circuit_rv32im_step_verify_accum,
+    get_trampoline, risc0_circuit_rv32im_poly_fp, risc0_circuit_rv32im_step_compute_aux,
+    risc0_circuit_rv32im_step_exec, risc0_circuit_rv32im_step_verify_aux,
     risc0_circuit_rv32im_step_verify_bytes, risc0_circuit_rv32im_step_verify_mem,
     risc0_circuit_string_free, risc0_circuit_string_ptr, Callback, RawError,
 };
@@ -30,7 +30,7 @@ use risc0_zkp::{
 use crate::CircuitImpl;
 
 impl CircuitStep<BabyBearElem> for CircuitImpl {
-    fn step_compute_accum<S: CircuitStepHandler<BabyBearElem>>(
+    fn step_compute_aux<S: CircuitStepHandler<BabyBearElem>>(
         &self,
         ctx: &CircuitStepContext,
         handler: &mut S,
@@ -41,14 +41,14 @@ impl CircuitStep<BabyBearElem> for CircuitImpl {
             handler,
             args,
             |err, ctx, trampoline, size, cycle, args_ptr, args_len| unsafe {
-                risc0_circuit_rv32im_step_compute_accum(
+                risc0_circuit_rv32im_step_compute_aux(
                     err, ctx, trampoline, size, cycle, args_ptr, args_len,
                 )
             },
         )
     }
 
-    fn step_verify_accum<S: CircuitStepHandler<BabyBearElem>>(
+    fn step_verify_aux<S: CircuitStepHandler<BabyBearElem>>(
         &self,
         ctx: &CircuitStepContext,
         handler: &mut S,
@@ -59,7 +59,7 @@ impl CircuitStep<BabyBearElem> for CircuitImpl {
             handler,
             args,
             |err, ctx, trampoline, size, cycle, args_ptr, args_len| unsafe {
-                risc0_circuit_rv32im_step_verify_accum(
+                risc0_circuit_rv32im_step_verify_aux(
                     err, ctx, trampoline, size, cycle, args_ptr, args_len,
                 )
             },

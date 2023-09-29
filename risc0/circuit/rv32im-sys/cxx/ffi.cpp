@@ -47,7 +47,7 @@ void bridgeCallback(void* ctx,
   }
 }
 
-extern "C" uint32_t risc0_circuit_rv32im_step_compute_accum(risc0_error* err,
+extern "C" uint32_t risc0_circuit_rv32im_step_compute_aux(risc0_error* err,
                                                             void* ctx,
                                                             Callback callback,
                                                             size_t steps,
@@ -56,12 +56,12 @@ extern "C" uint32_t risc0_circuit_rv32im_step_compute_accum(risc0_error* err,
                                                             size_t /*args_len*/) {
   return ffi_wrap<uint32_t>(err, 0, [&] {
     BridgeContext bridgeCtx{ctx, callback};
-    return circuit::rv32im::step_compute_accum(&bridgeCtx, bridgeCallback, steps, cycle, args_ptr)
+    return circuit::rv32im::step_compute_aux(&bridgeCtx, bridgeCallback, steps, cycle, args_ptr)
         .asRaw();
   });
 }
 
-extern "C" uint32_t risc0_circuit_rv32im_step_verify_accum(risc0_error* err,
+extern "C" uint32_t risc0_circuit_rv32im_step_verify_aux(risc0_error* err,
                                                            void* ctx,
                                                            Callback callback,
                                                            size_t steps,
@@ -70,7 +70,7 @@ extern "C" uint32_t risc0_circuit_rv32im_step_verify_accum(risc0_error* err,
                                                            size_t /*args_len*/) {
   return ffi_wrap<uint32_t>(err, 0, [&] {
     BridgeContext bridgeCtx{ctx, callback};
-    return circuit::rv32im::step_verify_accum(&bridgeCtx, bridgeCallback, steps, cycle, args_ptr)
+    return circuit::rv32im::step_verify_aux(&bridgeCtx, bridgeCallback, steps, cycle, args_ptr)
         .asRaw();
   });
 }

@@ -58,23 +58,23 @@ impl<'a, CH: CudaHash> CircuitHal<CudaHal<CH>> for CudaCircuitHal<CH> {
         po2: usize,
         steps: usize,
     ) {
-        let code = groups[REGISTER_GROUP_CONTROL];
+        let control = groups[REGISTER_GROUP_CONTROL];
         let data = groups[REGISTER_GROUP_DATA];
-        let accum = groups[REGISTER_GROUP_AUX];
+        let aux = groups[REGISTER_GROUP_AUX];
         let mix = globals[GLOBAL_MIX];
         let out = globals[GLOBAL_OUT];
         log::debug!(
-            "check: {}, code: {}, data: {}, accum: {}, mix: {} out: {}",
+            "check: {}, control: {}, data: {}, aux: {}, mix: {} out: {}",
             check.size(),
-            code.size(),
+            control.size(),
             data.size(),
-            accum.size(),
+            aux.size(),
             mix.size(),
             out.size()
         );
         log::debug!(
             "total: {}",
-            (check.size() + code.size() + data.size() + accum.size() + mix.size() + out.size()) * 4
+            (check.size() + control.size() + data.size() + aux.size() + mix.size() + out.size()) * 4
         );
 
         const EXP_PO2: usize = log2_ceil(INV_RATE);
@@ -93,9 +93,9 @@ impl<'a, CH: CudaHash> CircuitHal<CudaHal<CH>> for CudaCircuitHal<CH> {
         unsafe {
             launch!(kernel<<<params.0, params.1, 0, stream>>>(
                 check.as_device_ptr(),
-                code.as_device_ptr(),
+                control.as_device_ptr(),
                 data.as_device_ptr(),
-                accum.as_device_ptr(),
+                aux.as_device_ptr(),
                 mix.as_device_ptr(),
                 out.as_device_ptr(),
                 poly_mix.as_device_ptr(),

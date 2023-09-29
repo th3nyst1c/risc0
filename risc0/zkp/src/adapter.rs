@@ -73,14 +73,14 @@ pub trait CircuitStep<E: Elem> {
         args: &[SyncSlice<E>],
     ) -> Result<E>;
 
-    fn step_compute_accum<S: CircuitStepHandler<E>>(
+    fn step_compute_aux<S: CircuitStepHandler<E>>(
         &self,
         ctx: &CircuitStepContext,
         custom: &mut S,
         args: &[SyncSlice<E>],
     ) -> Result<E>;
 
-    fn step_verify_accum<S: CircuitStepHandler<E>>(
+    fn step_verify_aux<S: CircuitStepHandler<E>>(
         &self,
         ctx: &CircuitStepContext,
         custom: &mut S,
@@ -110,7 +110,7 @@ pub trait PolyExt<F: Field> {
 pub trait TapsProvider {
     fn get_taps(&self) -> &'static TapSet<'static>;
 
-    fn code_size(&self) -> usize {
+    fn control_size(&self) -> usize {
         self.get_taps().group_size(REGISTER_GROUP_CONTROL)
     }
 }

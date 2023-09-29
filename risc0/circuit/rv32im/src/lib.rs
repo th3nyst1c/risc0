@@ -122,9 +122,9 @@ pub mod testutil {
         pub po2: usize,
         pub steps: usize,
         pub domain: usize,
-        pub code: Vec<BabyBearElem>,
+        pub control: Vec<BabyBearElem>,
         pub data: Vec<BabyBearElem>,
-        pub accum: Vec<BabyBearElem>,
+        pub aux: Vec<BabyBearElem>,
         pub mix: Vec<BabyBearElem>,
         pub out: Vec<BabyBearElem>,
         pub poly_mix: BabyBearExtElem,
@@ -137,27 +137,27 @@ pub mod testutil {
             let domain = steps * INV_RATE;
             let circuit = crate::CircuitImpl::new();
             let taps = circuit.get_taps();
-            let code_size = taps.group_size(REGISTER_GROUP_CONTROL);
+            let control_size = taps.group_size(REGISTER_GROUP_CONTROL);
             let data_size = taps.group_size(REGISTER_GROUP_DATA);
-            let accum_size = taps.group_size(REGISTER_GROUP_AUX);
-            let code = random_fps(&mut rng, code_size * domain);
+            let aux_size = taps.group_size(REGISTER_GROUP_AUX);
+            let control = random_fps(&mut rng, control_size * domain);
             let data = random_fps(&mut rng, data_size * domain);
-            let accum = random_fps(&mut rng, accum_size * domain);
+            let aux = random_fps(&mut rng, aux_size * domain);
             let mix = random_fps(&mut rng, CircuitImpl::MIX_SIZE);
             let out = random_fps(&mut rng, CircuitImpl::OUTPUT_SIZE);
             let poly_mix = BabyBearExtElem::random(&mut rng);
-            log::debug!("code: {} bytes", code.len() * 4);
+            log::debug!("control: {} bytes", control.len() * 4);
             log::debug!("data: {} bytes", data.len() * 4);
-            log::debug!("accum: {} bytes", accum.len() * 4);
+            log::debug!("aux: {} bytes", aux.len() * 4);
             log::debug!("mix: {} bytes", mix.len() * 4);
             log::debug!("out: {} bytes", out.len() * 4);
             Self {
                 po2,
                 steps,
                 domain,
-                code,
+                control,
                 data,
-                accum,
+                aux,
                 mix,
                 out,
                 poly_mix,
@@ -193,14 +193,14 @@ pub mod testutil {
         C: CircuitHal<H>,
     {
         let check = hal.alloc_elem("check", BabyBearExtElem::EXT_SIZE * params.domain);
-        let code = hal.copy_from_elem("code", &params.code);
+        let control = hal.copy_from_elem("control", &params.control);
         let data = hal.copy_from_elem("data", &params.data);
-        let accum = hal.copy_from_elem("accum", &params.accum);
+        let aux = hal.copy_from_elem("aux", &params.aux);
         let mix = hal.copy_from_elem("mix", &params.mix);
         let out = hal.copy_from_elem("out", &params.out);
         circuit_hal.eval_check(
             &check,
-            &[&accum, &code, &data],
+            &[&aux, &control, &data],
             &[&mix, &out],
             params.poly_mix,
             params.po2,

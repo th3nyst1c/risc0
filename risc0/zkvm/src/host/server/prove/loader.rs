@@ -87,7 +87,7 @@ struct ControlGroup(Vec<BabyBearElem>);
 
 impl ControlGroup {
     fn new() -> Self {
-        Self(vec![BabyBearElem::ZERO; CIRCUIT.code_size()])
+        Self(vec![BabyBearElem::ZERO; CIRCUIT.control_size()])
     }
 
     fn reset(&mut self) {
@@ -424,7 +424,7 @@ impl Loader {
 
     /// Compute the `ControlId` associated with the given HAL
     pub fn compute_control_id<H: Hal<Elem = BabyBearElem>>(&self, hal: &H) -> Vec<Digest> {
-        let code_size = CIRCUIT.code_size();
+        let control_size = CIRCUIT.control_size();
 
         // Start with an empty table
         let mut table = Vec::new();
@@ -434,15 +434,15 @@ impl Loader {
             let cycles = 1 << i;
             log::info!("po2: {i}");
             // Make a vector & set it up with the elf data
-            let mut code = vec![BabyBearElem::default(); cycles * code_size];
+            let mut code = vec![BabyBearElem::default(); cycles * control_size];
             self.load_code(&mut code, cycles);
             // Copy into accel buffer
             let coeffs = hal.copy_from_elem("coeffs", &code);
             // Do interpolate & shift
-            hal.batch_interpolate_ntt(&coeffs, code_size);
-            hal.zk_shift(&coeffs, code_size);
+            hal.batch_interpolate_ntt(&coeffs, control_size);
+            hal.zk_shift(&coeffs, control_size);
             // Make the poly-group & extract the root
-            let code_group = TraceSection::new(hal, coeffs, code_size, cycles, "code");
+            let code_group = TraceSection::new(hal, coeffs, control_size, cycles, "code");
             table.push(*code_group.merkle.root());
         }
 
@@ -450,10 +450,10 @@ impl Loader {
     }
 
     fn load_code(&self, code: &mut [BabyBearElem], max_cycles: usize) {
-        let code_size = CIRCUIT.code_size();
+        let control_size = CIRCUIT.control_size();
         let mut cycle = 0;
         self.load(|chunk, fini| {
-            for i in 0..code_size {
+            for i in 0..control_size {
                 code[max_cycles * i + cycle] = chunk[i];
             }
             let total = cycle + fini + ZK_CYCLES;

@@ -22,7 +22,7 @@ use crate::{
     adapter::{CircuitProveDef, CircuitStepContext, CircuitStepHandler, REGISTER_GROUP_AUX},
     hal::cpu::CpuBuffer,
     prove::{
-        accum::{Accum, Handler},
+        aux::{Aux, Handler},
         executor::Executor,
         write_iop::WriteIOP,
     },
@@ -38,7 +38,7 @@ where
 {
     exec: &'a mut Executor<F, C, S>,
     mix: CpuBuffer<F::Elem>,
-    accum: CpuBuffer<F::Elem>,
+    aux: CpuBuffer<F::Elem>,
     steps: usize,
 }
 
@@ -53,7 +53,7 @@ where
         ProveAdapter {
             exec,
             mix: CpuBuffer::from(Vec::new()),
-            accum: CpuBuffer::from(Vec::new()),
+            aux: CpuBuffer::from(Vec::new()),
             steps,
         }
     }
@@ -62,34 +62,34 @@ where
         self.exec.circuit.get_taps()
     }
 
-    /// Perform initial 'execution' setting code + data.
+    /// Perform initial 'execution' setting control + data.
     /// Additionally, write any 'results' as needed.
     pub fn execute(&mut self, iop: &mut WriteIOP<F>) {
         iop.write_field_elem_slice(&self.exec.io.as_slice());
         iop.write_u32_slice(&[self.exec.po2 as u32]);
     }
 
-    fn compute_accum(&mut self) {
+    fn compute_aux(&mut self) {
         let args = &[
-            self.exec.code.as_slice_sync(),
+            self.exec.control.as_slice_sync(),
             self.exec.io.as_slice_sync(),
             self.exec.data.as_slice_sync(),
             self.mix.as_slice_sync(),
-            self.accum.as_slice_sync(),
+            self.aux.as_slice_sync(),
         ];
-        let accum: Mutex<Accum<F::ExtElem>> = Mutex::new(Accum::new(self.steps));
-        tracing::info_span!("step_compute_accum").in_scope(|| {
+        let aux: Mutex<Aux<F::ExtElem>> = Mutex::new(Aux::new(self.steps));
+        tracing::info_span!("step_compute_aux").in_scope(|| {
             // TODO: Add an way to be able to run this on cuda, metal, etc.
             let c = &self.exec.circuit;
             (0..self.steps - ZK_CYCLES).into_par_iter().for_each_init(
-                || Handler::<F>::new(&accum),
-                |accum_handler, cycle| {
-                    c.step_compute_accum(
+                || Handler::<F>::new(&aux),
+                |aux_handler, cycle| {
+                    c.step_compute_aux(
                         &CircuitStepContext {
                             size: self.steps,
                             cycle,
                         },
-                        accum_handler,
+                        aux_handler,
                         args,
                     )
                     .unwrap();
@@ -97,19 +97,19 @@ where
             );
         });
         tracing::info_span!("calc_prefix_products").in_scope(|| {
-            accum.lock().unwrap().calc_prefix_products();
+            aux.lock().unwrap().calc_prefix_products();
         });
-        tracing::info_span!("step_verify_accum").in_scope(|| {
+        tracing::info_span!("step_verify_aux").in_scope(|| {
             let c = &self.exec.circuit;
             (0..self.steps - ZK_CYCLES).into_par_iter().for_each_init(
-                || Handler::<F>::new(&accum),
-                |accum_handler, cycle| {
-                    c.step_verify_accum(
+                || Handler::<F>::new(&aux),
+                |aux_handler, cycle| {
+                    c.step_verify_aux(
                         &CircuitStepContext {
                             size: self.steps,
                             cycle,
                         },
-                        accum_handler,
+                        aux_handler,
                         args,
                     )
                     .unwrap();
@@ -118,32 +118,32 @@ where
         });
     }
 
-    /// Perform 'accumulate' stage, using the iop for any RNG state.
+    /// Perform accumulations for `Auxiliary` stage, using the iop for any RNG state.
     #[tracing::instrument(skip_all)]
     pub fn accumulate(&mut self, iop: &mut WriteIOP<F>) {
         // Make the mixing values
         self.mix = CpuBuffer::from_fn(C::MIX_SIZE, |_| iop.random_elem());
-        // Make and compute accum data
-        let accum_size = self
+        // Make and compute aux data
+        let aux_size = self
             .exec
             .circuit
             .get_taps()
             .group_size(REGISTER_GROUP_AUX);
-        self.accum = CpuBuffer::from_fn(self.steps * accum_size, |_| F::Elem::INVALID);
+        self.aux = CpuBuffer::from_fn(self.steps * aux_size, |_| F::Elem::INVALID);
 
-        self.compute_accum();
+        self.compute_aux();
 
-        // Zero out 'invalid' entries in accum and io
-        let mut accum = self.accum.as_slice_mut();
+        // Zero out 'invalid' entries in aux and io
+        let mut aux = self.aux.as_slice_mut();
         let mut io = self.exec.io.as_slice_mut();
-        for value in accum.iter_mut().chain(io.iter_mut()) {
+        for value in aux.iter_mut().chain(io.iter_mut()) {
             *value = value.valid_or_zero();
         }
-        // Add random noise to end of accum and change invalid element to zero
+        // Add random noise to end of aux and change invalid element to zero
         let mut rng = thread_rng();
         for i in self.steps - ZK_CYCLES..self.steps {
-            for j in 0..accum_size {
-                accum[j * self.steps + i] = F::Elem::random(&mut rng);
+            for j in 0..aux_size {
+                aux[j * self.steps + i] = F::Elem::random(&mut rng);
             }
         }
     }
@@ -152,16 +152,16 @@ where
         self.exec.po2 as u32
     }
 
-    pub fn get_code(&self) -> &CpuBuffer<F::Elem> {
-        &self.exec.code
+    pub fn get_control(&self) -> &CpuBuffer<F::Elem> {
+        &self.exec.control
     }
 
     pub fn get_data(&self) -> &CpuBuffer<F::Elem> {
         &self.exec.data
     }
 
-    pub fn get_accum(&self) -> &CpuBuffer<F::Elem> {
-        &self.accum
+    pub fn get_aux(&self) -> &CpuBuffer<F::Elem> {
+        &self.aux
     }
 
     pub fn get_mix(&self) -> &CpuBuffer<F::Elem> {

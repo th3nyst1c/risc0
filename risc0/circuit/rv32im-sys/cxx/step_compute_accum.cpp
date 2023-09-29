@@ -29,7 +29,7 @@ namespace risc0::circuit::rv32im {
 #pragma clang diagnostic ignored "-Wunused-variable"
 #endif
 
-Fp step_compute_accum(void* ctx, HostBridge host, size_t steps, size_t cycle, Fp** args) {
+Fp step_compute_aux(void* ctx, HostBridge host, size_t steps, size_t cycle, Fp** args) {
   size_t mask = steps - 1;
   std::array<Fp, 96> host_args;
   std::array<Fp, 32> host_outs;
