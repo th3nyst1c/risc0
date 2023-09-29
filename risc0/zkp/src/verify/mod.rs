@@ -200,13 +200,13 @@ where
         ret
     }
 
-    fn verify<CheckCodeFn>(
+    fn verify<CheckControlFn>(
         &mut self,
         seal: &'a [u32],
-        check_code: CheckCodeFn,
+        check_control: CheckControlFn,
     ) -> Result<(), VerificationError>
     where
-        CheckCodeFn: Fn(u32, &Digest) -> Result<(), VerificationError>,
+        CheckControlFn: Fn(u32, &Digest) -> Result<(), VerificationError>,
     {
         if seal.is_empty() {
             return Err(VerificationError::ReceiptFormatError);
@@ -232,42 +232,39 @@ where
         let data_size = taps.group_size(REGISTER_GROUP_DATA);
         let aux_size = taps.group_size(REGISTER_GROUP_AUX);
 
-        // Get merkle root for the code merkle tree.
-        // The code merkle tree contains the control instructions for the zkVM.
+        // Get merkle root for the control merkle tree.
+        // The control merkle tree contains the control instructions for the zkVM.
         #[cfg(not(target_os = "zkvm"))]
-        log::debug!("code_merkle");
-        let code_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, control_size, QUERIES);
-        // log::debug!("codeRoot = {}", code_merkle.root());
-        check_code(self.po2, code_merkle.root())?;
+        log::debug!("control_merkle");
+        let control_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, control_size, QUERIES);
+        // log::debug!("controlRoot = {}", control_merkle.root());
+        check_control(self.po2, control_merkle.root())?;
 
         // Get merkle root for the data merkle tree.
         // The data merkle tree contains the execution trace of the program being run,
-        // including memory accesses as well as the permutation of those memory
-        // accesses sorted by location used by PLONK.
+        // as well as additional advice inputs provided by the host.
+        // These advice inputs include data that has been sorted by the host to enable
+        // efficient memory verification.
         #[cfg(not(target_os = "zkvm"))]
         log::debug!("data_merkle");
         let data_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, data_size, QUERIES);
         // log::debug!("dataRoot = {}", data_merkle.root());
 
-        // Prep accumulation
+        // Prepare to compute auxiliary trace
         #[cfg(not(target_os = "zkvm"))]
-        log::debug!("accumulate");
-        // Fill in accum mix
+        log::debug!("aux");
+        // Fill in aux mix
         self.mix = (0..C::MIX_SIZE).map(|_| iop.random_elem()).collect();
 
-        // Get merkle root for the accum merkle tree.
-        // The accum merkle tree contains the accumulations for two permutation check
-        // arguments: Each permutation check consists of a pre-permutation
-        // accumulation and a post-permutation accumulation.
-        // The first permutation check uses memory-based values (see PLONK paper for
-        // details). This permutation is used to re-order memory accesses for
-        // quicker verification. The second permutation check uses bytes-based
-        // values (see PLOOKUP paper for details). This permutation is used to
-        // implement a look-up table.
+        // Get merkle root for the aux merkle tree.
+        // The aux merkle tree contains the auxiliary trace, which supports:
+        //   - an accumulator-based permutation check
+        //   - an accumulator-based lookup argument
+        //   - big integer multiplication acceleration
         #[cfg(not(target_os = "zkvm"))]
-        log::debug!("accum_merkle");
-        let accum_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, aux_size, QUERIES);
-        // log::debug!("accumRoot = {}", accum_merkle.root());
+        log::debug!("aux_merkle");
+        let aux_merkle = MerkleTreeVerifier::new(&mut iop, hashfn, domain, aux_size, QUERIES);
+        // log::debug!("auxRoot = {}", aux_merkle.root());
 
         // Get a pseudorandom value with which to mix the constraint polynomials.
         // See DEEP-ALI protocol from DEEP-FRI paper for details on constraint mixing.
@@ -398,8 +395,8 @@ where
             // log::debug!("fri_verify");
             let x = gen.pow(idx);
             let rows = [
-                accum_merkle.verify(iop, hashfn, idx)?,
-                code_merkle.verify(iop, hashfn, idx)?,
+                aux_merkle.verify(iop, hashfn, idx)?,
+                control_merkle.verify(iop, hashfn, idx)?,
                 data_merkle.verify(iop, hashfn, idx)?,
             ];
             let check_row = check_merkle.verify(iop, hashfn, idx)?;
@@ -430,19 +427,19 @@ where
     }
 }
 
-/// Verify a seal is valid for the given circuit, and code checking function.
+/// Verify a seal is valid for the given circuit, and control checking function.
 #[must_use]
 #[tracing::instrument(skip_all)]
-pub fn verify<F, C, CheckCode>(
+pub fn verify<F, C, CheckControl>(
     circuit: &C,
     suite: &HashSuite<F>,
     seal: &[u32],
-    check_code: CheckCode,
+    check_control: CheckControl,
 ) -> Result<(), VerificationError>
 where
     F: Field,
     C: CircuitCoreDef<F>,
-    CheckCode: Fn(u32, &Digest) -> Result<(), VerificationError>,
+    CheckControl: Fn(u32, &Digest) -> Result<(), VerificationError>,
 {
-    Verifier::<F, C>::new(circuit, suite).verify(seal, check_code)
+    Verifier::<F, C>::new(circuit, suite).verify(seal, check_control)
 }
