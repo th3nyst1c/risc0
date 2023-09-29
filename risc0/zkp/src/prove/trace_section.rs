@@ -19,7 +19,7 @@ use crate::{
     INV_RATE, QUERIES,
 };
 
-/// A PolyGroup represents a group of polynomials, all of the same maximum
+/// A TraceSection represents a group of polynomials, all of the same maximum
 /// degree, as well as the evaluation of those polynomials over some domain that
 /// is larger than that degree by some invRate. Additionally, it includes a
 /// dense Merkle tree, where each entry is a single point of the domain, and the
@@ -28,7 +28,7 @@ use crate::{
 /// 2^16 entries, each being a hash of 100 values.  The size of the domain is
 /// always a power of 2 so that we can use NTTs.
 ///
-/// The primary purpose of the PolyGroup is for use in the DEEP-ALI protocol,
+/// The primary purpose of the TraceSection is for use in the DEEP-ALI protocol,
 /// which basically needs 4 methods during proof generation, specifically we
 /// need to: 1) Resolve queries (i.e. make MerkleColProofs)
 /// 2) Do evaluation of the polynomials at 'randomly' chosen points
@@ -41,7 +41,7 @@ use crate::{
 /// 2) The points evaluated on the domain in question (for the 'col' part of
 /// merkle proofs) 3) The Merkle tree itself.
 ///
-/// PolyGroups are constructed from two basic sources: steps of a computations,
+/// TraceSections are constructed from two basic sources: steps of a computations,
 /// and a single higher degree polynomial that has been split into lower degree
 /// parts.  In the case of computations, the resulting steps must be padded
 /// (possibly with randomized data), which is presumed to be done by the caller.
@@ -49,15 +49,15 @@ use crate::{
 /// which means that the normal NTT evaluation domain does not reveal anything
 /// about the original datapoints (i.e. is zero knowledge) so long as the number
 /// of queries is less than the randomized padding.
-pub struct PolyGroup<H: Hal> {
+pub struct TraceSection<H: Hal> {
     pub coeffs: H::Buffer<H::Elem>,
     pub count: usize,
     pub evaluated: H::Buffer<H::Elem>,
     pub merkle: MerkleTreeProver<H>,
 }
 
-impl<H: Hal> PolyGroup<H> {
-    #[tracing::instrument(name = "PolyGroup", skip_all, fields(name = _name))]
+impl<H: Hal> TraceSection<H> {
+    #[tracing::instrument(name = "TraceSection", skip_all, fields(name = _name))]
     pub fn new(
         hal: &H,
         coeffs: H::Buffer<H::Elem>,
@@ -71,7 +71,7 @@ impl<H: Hal> PolyGroup<H> {
         hal.batch_expand_into_evaluate_ntt(&evaluated, &coeffs, count, log2_ceil(INV_RATE));
         hal.batch_bit_reverse(&coeffs, count);
         let merkle = MerkleTreeProver::new(hal, &evaluated, domain, count, QUERIES);
-        PolyGroup {
+        TraceSection {
             coeffs,
             count,
             evaluated,

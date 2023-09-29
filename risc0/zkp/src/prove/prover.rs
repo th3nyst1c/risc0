@@ -18,7 +18,7 @@ use risc0_core::field::{Elem, ExtElem, RootsOfUnity};
 use crate::{
     core::poly::{poly_divide, poly_interpolate},
     hal::{Buffer, CircuitHal, Hal},
-    prove::{fri::fri_prove, poly_group::PolyGroup, write_iop::WriteIOP},
+    prove::{fri::fri_prove, trace_section::TraceSection, write_iop::WriteIOP},
     taps::TapSet,
     INV_RATE,
 };
@@ -28,7 +28,7 @@ pub struct Prover<'a, H: Hal> {
     hal: &'a H,
     taps: &'a TapSet<'a>,
     iop: WriteIOP<H::Field>,
-    groups: Vec<Option<PolyGroup<H>>>,
+    groups: Vec<Option<TraceSection<H>>>,
     cycles: usize,
     po2: usize,
 }
@@ -85,7 +85,7 @@ impl<'a, H: Hal> Prover<'a, H> {
         );
 
         let coeffs = make_coeffs(self.hal, buf, group_size);
-        let group_ref = self.groups[tap_group_index].insert(PolyGroup::new(
+        let group_ref = self.groups[tap_group_index].insert(TraceSection::new(
             self.hal,
             coeffs,
             group_size,
@@ -161,8 +161,8 @@ impl<'a, H: Hal> Prover<'a, H> {
         // the coeffients of g1, etc. So really, we can just reinterpret 4 polys of
         // invRate*size to 16 polys of size, without actually doing anything.
 
-        // Make the PolyGroup + add it to the IOP;
-        let check_group = PolyGroup::new(self.hal, check_poly, H::CHECK_SIZE, self.cycles, "check");
+        // Make the TraceSection + add it to the IOP;
+        let check_group = TraceSection::new(self.hal, check_poly, H::CHECK_SIZE, self.cycles, "check");
         check_group.merkle.commit(&mut self.iop);
         log::debug!("checkGroup: {}", check_group.merkle.root());
 
