@@ -25,7 +25,7 @@ use risc0_zkp::{
 };
 
 use crate::{
-    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
+    GLOBAL_MIX, GLOBAL_OUT, REGISTER_GROUP_AUX, REGISTER_GROUP_CONTROL, REGISTER_GROUP_DATA,
 };
 
 pub struct CpuCircuitHal<'a, C: PolyFp<BabyBear>> {
@@ -65,7 +65,7 @@ where
         // usage is within this function and each thread access will not overlap with
         // each other.
 
-        let code = groups[REGISTER_GROUP_CODE].as_slice();
+        let code = groups[REGISTER_GROUP_CONTROL].as_slice();
         let code = unsafe { std::slice::from_raw_parts(code.as_ptr(), code.len()) };
         let data = groups[REGISTER_GROUP_DATA].as_slice();
         let data = unsafe { std::slice::from_raw_parts(data.as_ptr(), data.len()) };

@@ -37,7 +37,7 @@ use risc0_zkp::{
 pub struct CircuitImpl;
 
 pub const REGISTER_GROUP_AUX: usize = 0;
-pub const REGISTER_GROUP_CODE: usize = 1;
+pub const REGISTER_GROUP_CONTROL: usize = 1;
 pub const REGISTER_GROUP_DATA: usize = 2;
 
 pub const GLOBAL_MIX: usize = 0;
@@ -116,7 +116,7 @@ pub mod testutil {
         INV_RATE,
     };
 
-    use crate::{CircuitImpl, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA};
+    use crate::{CircuitImpl, REGISTER_GROUP_AUX, REGISTER_GROUP_CONTROL, REGISTER_GROUP_DATA};
 
     pub struct EvalCheckParams {
         pub po2: usize,
@@ -137,7 +137,7 @@ pub mod testutil {
             let domain = steps * INV_RATE;
             let circuit = crate::CircuitImpl::new();
             let taps = circuit.get_taps();
-            let code_size = taps.group_size(REGISTER_GROUP_CODE);
+            let code_size = taps.group_size(REGISTER_GROUP_CONTROL);
             let data_size = taps.group_size(REGISTER_GROUP_DATA);
             let accum_size = taps.group_size(REGISTER_GROUP_AUX);
             let code = random_fps(&mut rng, code_size * domain);

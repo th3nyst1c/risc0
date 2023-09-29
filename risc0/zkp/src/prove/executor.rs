@@ -22,7 +22,7 @@ use risc0_core::field::{Elem, Field};
 
 use crate::{
     adapter::{
-        CircuitProveDef, CircuitStepContext, CircuitStepHandler, REGISTER_GROUP_CODE,
+        CircuitProveDef, CircuitStepContext, CircuitStepHandler, REGISTER_GROUP_CONTROL,
         REGISTER_GROUP_DATA,
     },
     hal::{
@@ -78,7 +78,7 @@ where
     ) -> Self {
         let po2 = max(min_po2, MIN_PO2);
         let taps = circuit.get_taps();
-        let code_size = taps.group_size(REGISTER_GROUP_CODE);
+        let code_size = taps.group_size(REGISTER_GROUP_CONTROL);
         let data_size = taps.group_size(REGISTER_GROUP_DATA);
         let steps = 1 << po2;
         debug!("po2: {po2}, steps: {steps}, code_size: {code_size}");

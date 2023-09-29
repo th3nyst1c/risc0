@@ -15,7 +15,7 @@
 use anyhow::Result;
 use risc0_circuit_rv32im::{
     layout::{OutBuffer, LAYOUT},
-    REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA,
+    REGISTER_GROUP_AUX, REGISTER_GROUP_CONTROL, REGISTER_GROUP_DATA,
 };
 use risc0_core::field::baby_bear::{BabyBear, Elem, ExtElem};
 #[cfg(feature = "fault-proof")]
@@ -117,7 +117,7 @@ where
         prover.set_po2(adapter.po2() as usize);
 
         prover.commit_group(
-            REGISTER_GROUP_CODE,
+            REGISTER_GROUP_CONTROL,
             hal.copy_from_elem("code", &adapter.get_code().as_slice()),
         );
         prover.commit_group(

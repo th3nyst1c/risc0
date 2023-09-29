@@ -26,7 +26,7 @@ pub use read_iop::ReadIOP;
 use risc0_core::field::{Elem, ExtElem, Field, RootsOfUnity};
 
 use crate::{
-    adapter::{CircuitCoreDef, REGISTER_GROUP_AUX, REGISTER_GROUP_CODE, REGISTER_GROUP_DATA},
+    adapter::{CircuitCoreDef, REGISTER_GROUP_AUX, REGISTER_GROUP_CONTROL, REGISTER_GROUP_DATA},
     core::{digest::Digest, hash::HashSuite, log2_ceil},
     taps::TapSet,
     INV_RATE, MAX_CYCLES_PO2, QUERIES,
@@ -228,7 +228,7 @@ where
         // log::debug!("size = {size}, po2 = {po2}");
 
         // Get taps and compute sizes
-        let code_size = taps.group_size(REGISTER_GROUP_CODE);
+        let code_size = taps.group_size(REGISTER_GROUP_CONTROL);
         let data_size = taps.group_size(REGISTER_GROUP_DATA);
         let accum_size = taps.group_size(REGISTER_GROUP_AUX);
 
